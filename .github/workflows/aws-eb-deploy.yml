@@ -6,17 +6,18 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 env:
-  AWS_REGION: us-east-1                     # US East region
-  EB_APPLICATION_NAME: turf-backend         # Your EB application name
-  EB_ENVIRONMENT_NAME: turf-backend-env     # Your EB environment name
-  S3_BUCKET_NAME: turfbackend-290620        # S3 bucket (globally unique)
+  AWS_REGION: us-east-1
+  EB_APPLICATION_NAME: turf-backend
+  EB_ENVIRONMENT_NAME: turf-backend-env
+  DEPLOY_PACKAGE_NAME: deploy-${{ github.sha }}.zip
 
 jobs:
   deploy:
+    name: Deploy to AWS EB
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
+      - name: Checkout source code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -30,123 +31,29 @@ jobs:
 
       - name: Create deployment package
         run: |
-          # Create a zip file excluding unnecessary files
-          zip -r deploy.zip . \
+          zip -r ${{ env.DEPLOY_PACKAGE_NAME }} . \
             -x "*.git*" \
             -x "node_modules/*" \
             -x "*.env.local" \
             -x "*.env.prod" \
             -x "tests/*" \
             -x "*.md" \
-            -x ".vscode/*"
+            -x ".vscode/*" \
+            -x ".github/*"
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ env.EB_APPLICATION_NAME }}
+          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
+          version_label: ${{ github.sha }}
+          region: ${{ env.AWS_REGION }}
+          deployment_package: ${{ env.DEPLOY_PACKAGE_NAME }}
+          use_existing_version_if_available: true
 
-      - name: Create S3 bucket if not exists
+      - name: Deployment finished
         run: |
-          if ! aws s3api head-bucket --bucket ${{ env.S3_BUCKET_NAME }} 2>/dev/null; then
-            # us-east-1 doesn't need LocationConstraint
-            aws s3api create-bucket --bucket ${{ env.S3_BUCKET_NAME }} --region ${{ env.AWS_REGION }} || true
-          fi
-          echo "S3 bucket ready"
-
-      - name: Upload to S3
-        run: |
-          VERSION_LABEL="ver-${{ github.sha }}-$(date +%Y%m%d%H%M%S)"
-          echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
-          aws s3 cp deploy.zip s3://${{ env.S3_BUCKET_NAME }}/$VERSION_LABEL.zip
-
-      - name: Create Elastic Beanstalk Application (if not exists)
-        run: |
-          APP_EXISTS=$(aws elasticbeanstalk describe-applications \
-            --application-names ${{ env.EB_APPLICATION_NAME }} \
-            --query 'Applications[0].ApplicationName' \
-            --output text 2>/dev/null || echo "")
-          if [ -z "$APP_EXISTS" ] || [ "$APP_EXISTS" = "None" ]; then
-            echo "Creating EB application..."
-            aws elasticbeanstalk create-application \
-              --application-name ${{ env.EB_APPLICATION_NAME }} \
-              --description "Turf Booking Backend API"
-          else
-            echo "EB application already exists"
-          fi
-
-      - name: Create Application Version
-        run: |
-          aws elasticbeanstalk create-application-version \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --version-label ${{ env.VERSION_LABEL }} \
-            --source-bundle S3Bucket=${{ env.S3_BUCKET_NAME }},S3Key=${{ env.VERSION_LABEL }}.zip \
-            --description "Deployment from GitHub commit ${{ github.sha }}"
-
-      - name: Check if Environment Exists
-        id: check-env
-        run: |
-          ENV_EXISTS=$(aws elasticbeanstalk describe-environments \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --environment-names ${{ env.EB_ENVIRONMENT_NAME }} \
-            --query 'Environments[?Status!=`Terminated`].EnvironmentName' \
-            --output text 2>/dev/null || echo "")
-          if [ -z "$ENV_EXISTS" ]; then
-            echo "env_exists=false" >> $GITHUB_OUTPUT
-          else
-            echo "env_exists=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create Environment (if not exists)
-        if: steps.check-env.outputs.env_exists == 'false'
-        run: |
-          aws elasticbeanstalk create-environment \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
-            --solution-stack-name "64bit Amazon Linux 2023 v6.7.0 running Node.js 20" \
-            --option-settings \
-              Namespace=aws:autoscaling:launchconfiguration,OptionName=IamInstanceProfile,Value=aws-elasticbeanstalk-ec2-role \
-              Namespace=aws:elasticbeanstalk:environment,OptionName=EnvironmentType,Value=SingleInstance \
-              Namespace=aws:elasticbeanstalk:application:environment,OptionName=NODE_ENV,Value=production \
-              Namespace=aws:elasticbeanstalk:application:environment,OptionName=PORT,Value=8080 \
-            --version-label ${{ env.VERSION_LABEL }}
-
-      - name: Deploy to Existing Environment
-        if: steps.check-env.outputs.env_exists == 'true'
-        run: |
-          aws elasticbeanstalk update-environment \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
-            --version-label ${{ env.VERSION_LABEL }}
-
-      - name: Wait for deployment to complete
-        run: |
-          echo "Waiting for deployment to complete (this can take 5-10 minutes)..."
-          for i in {1..60}; do
-            STATUS=$(aws elasticbeanstalk describe-environments \
-              --application-name ${{ env.EB_APPLICATION_NAME }} \
-              --environment-names ${{ env.EB_ENVIRONMENT_NAME }} \
-              --query 'Environments[0].Status' \
-              --output text)
-            HEALTH=$(aws elasticbeanstalk describe-environments \
-              --application-name ${{ env.EB_APPLICATION_NAME }} \
-              --environment-names ${{ env.EB_ENVIRONMENT_NAME }} \
-              --query 'Environments[0].HealthStatus' \
-              --output text)
-            echo "Status: $STATUS | Health: $HEALTH (Attempt $i/60)"
-            if [ "$STATUS" = "Ready" ] && [ "$HEALTH" = "Ok" ]; then
-              echo "✅ Deployment completed successfully!"
-              break
-            fi
-            sleep 10
-          done
-
-      - name: Get Environment URL
-        run: |
-          URL=$(aws elasticbeanstalk describe-environments \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --environment-names ${{ env.EB_ENVIRONMENT_NAME }} \
-            --query 'Environments[0].CNAME' \
-            --output text)
-          echo "🚀 Application deployed to: http://$URL"
+          echo "✅ Deployment successful!"
+          echo "🚀 Application URL: https://${{ env.EB_ENVIRONMENT_NAME }}.us-east-1.elasticbeanstalk.com"
