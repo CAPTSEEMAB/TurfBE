@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutMetricData",
+        "ec2:DescribeInstanceStatus",
+        "ec2:DescribeTags",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogStreams",
+        "logs:DescribeLogGroups",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket",
+        "elasticbeanstalk:PutInstanceStatistics"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

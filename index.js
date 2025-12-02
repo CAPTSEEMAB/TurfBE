@@ -71,6 +71,27 @@ app.use((req, res, next) => {
 app.use((req, _res, next) => { console.log(`${req.method} ${req.url}`); next(); });
 
 // ─────────────────────────────────────────────
+// Health Check Endpoint (for AWS Elastic Beanstalk)
+// ─────────────────────────────────────────────
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'OK',
+    data: {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      environment: NODE_ENV,
+      uptime: process.uptime()
+    }
+  });
+});
+
+// Root health check (for basic LB health checks)
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
 function normalizeBase(s) {
