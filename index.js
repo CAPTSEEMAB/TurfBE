@@ -408,7 +408,7 @@ app.use((err, _req, res, _next) => {
 // Startup
 const displayBase = SERVER_PUBLIC_URL ? `${SERVER_PUBLIC_URL}${API}` : `http://localhost:${PORT}${API}`;
 app.listen(PORT, () => {
-  console.log(`✅ Env: ${NODE_ENV}`);
-  console.log(`✅ API base: ${displayBase}`);
-  console.log(`📖 Swagger: ${(SERVER_PUBLIC_URL || `http://localhost:${PORT}`)}${API}/docs`);
+  console.log(`Env: ${NODE_ENV}`);
+  console.log(`API base: ${displayBase}`);
+  console.log(`Swagger: ${(SERVER_PUBLIC_URL || `http://localhost:${PORT}`)}${API}/docs`);
 });
