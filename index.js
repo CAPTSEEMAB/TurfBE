@@ -176,7 +176,7 @@ if (SERVER_PUBLIC_URL) swaggerServers.push({ url: `${SERVER_PUBLIC_URL}${API}`, 
 const swaggerSpec = {
   openapi: '3.0.0',
   info: {
-    title: 'NBA Players and Turfs API',
+    title: 'NBA Players and Turfs API- Prod',
     version: '1.0.0',
     description: 'Auth + Players (with nested performances) + Turfs (read-only)',
   },
