@@ -10,7 +10,7 @@ env:
   EB_APPLICATION_NAME: turf-backend
   EB_ENVIRONMENT_NAME: turf-backend-env
   DEPLOY_PACKAGE_NAME: deploy-${{ github.sha }}.zip
-  S3_BUCKET_NAME: turfbackend-290620
+  S3_BUCKET_NAME: turf-backend-us-east-1-29062025
 
 jobs:
   deploy:
