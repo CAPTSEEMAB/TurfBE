@@ -10,6 +10,7 @@ env:
   EB_APPLICATION_NAME: turf-backend
   EB_ENVIRONMENT_NAME: turf-backend-env
   DEPLOY_PACKAGE_NAME: deploy-${{ github.sha }}.zip
+  S3_BUCKET_NAME: turfbackend-290620
 
 jobs:
   deploy:
@@ -51,6 +52,7 @@ jobs:
           version_label: ${{ github.sha }}
           region: ${{ env.AWS_REGION }}
           deployment_package: ${{ env.DEPLOY_PACKAGE_NAME }}
+          existing_bucket_name: ${{ env.S3_BUCKET_NAME }}
           use_existing_version_if_available: true
 
       - name: Deployment finished
