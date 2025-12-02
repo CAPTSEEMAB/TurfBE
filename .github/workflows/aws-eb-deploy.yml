@@ -9,7 +9,7 @@ env:
   AWS_REGION: ap-south-1                    # Change to your preferred region
   EB_APPLICATION_NAME: turf-backend         # Your EB application name
   EB_ENVIRONMENT_NAME: turf-backend-env     # Your EB environment name
-  S3_BUCKET_NAME: turfBackend-290620  # S3 bucket (globally unique)
+  S3_BUCKET_NAME: turfbackend-290620  # S3 bucket (globally unique - lowercase only)
 
 jobs:
   deploy:
