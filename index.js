@@ -38,7 +38,7 @@ app.use(express.json({ limit: '1mb' }));
 
 // Helpful 400 for invalid JSON
 app.use((err, _req, res, next) => {
-  if (err && err.type === 'entity.parse.failed') {
+  if (err?.type === 'entity.parse.failed') {
     return res.status(400).json({
       success: false,
       error: { code: 'INVALID_JSON', message: 'Request body is not valid JSON format' }
@@ -363,7 +363,7 @@ r.put('/players/:id', auth, ah(async (req, res) => {
     const current = Array.isArray(existing.performances) ? existing.performances : [];
     const map = new Map(current.map(p => [p.performance_date, p]));
     for (const p of req.body.performances_append) {
-      map.set(p.performance_date, { ...(map.get(p.performance_date) || {}), ...p });
+      map.set(p.performance_date, { ...map.get(p.performance_date), ...p });
     }
     updates.performances = Array.from(map.values());
   }
