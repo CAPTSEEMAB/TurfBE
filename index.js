@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 require('dotenv').config();
 
 const express = require('express');
@@ -20,7 +21,6 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ANON_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE) {
-  // eslint-disable-next-line no-console
   console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
@@ -379,19 +379,14 @@ app.use(API, r);
 app.use((req, res) => bad(res, 404, 'NOT_FOUND', `Route ${req.method} ${req.originalUrl} not found`));
 // Global error handler that catches unhandled exceptions and returns 500 error
 app.use((err, _req, res, _next) => {
-  // eslint-disable-next-line no-console
   console.error('Unhandled error:', err);
   return bad(res, 500, 'SERVER_ERROR', 'Something went wrong',
     NODE_ENV === 'development' ? err.stack : undefined);
 });
 
 const displayBase = SERVER_PUBLIC_URL ? `${SERVER_PUBLIC_URL}${API}` : `http://localhost:${PORT}${API}`;
-// eslint-disable-next-line no-console
 app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
   console.log(`Environment: ${NODE_ENV}`);
-  // eslint-disable-next-line no-console
   console.log(`API base: ${displayBase}`);
-  // eslint-disable-next-line no-console
   console.log(`Swagger: ${(SERVER_PUBLIC_URL || `http://localhost:${PORT}`)}${API}/docs`);
 });
