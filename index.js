@@ -300,7 +300,7 @@ r.post('/players', auth, ah(async (req, res) => {
 
 // Retrieves player by ID with optional performance filtering by days parameter
 r.get('/players/:id', auth, ah(async (req, res) => {
-  const days = req.query.days ? Math.max(1, Math.min(365, parseInt(req.query.days, 10))) : null;
+  const days = req.query.days ? Math.max(1, Math.min(365, Number.parseInt(req.query.days, 10))) : null;
   const { data, error } = await db.from('nba_players').select('*').eq('id', req.params.id).maybeSingle();
   if (error) return bad(res, 500, 'DB', error.message);
   if (!data) return bad(res, 404, 'NOT_FOUND', 'Player not found');

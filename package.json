@@ -6,7 +6,6 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "lint": "eslint . --ext .js",
-    "lint:score": "node scripts/eslint-score.js",
     "typecheck": "echo 'Backend: JavaScript only, no TypeScript'"
   },
   "dependencies": {
