@@ -1,0 +1,61 @@
+name: Deploy to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  AWS_REGION: us-east-1
+  EB_APPLICATION_NAME: turf-backend
+  EB_ENVIRONMENT_NAME: turf-backend-env
+  DEPLOY_PACKAGE_NAME: deploy-${{ github.sha }}.zip
+  S3_BUCKET_NAME: turf-backend-us-east-1-29062025
+
+jobs:
+  deploy:
+    name: Deploy to AWS EB
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create deployment package
+        run: |
+          zip -r ${{ env.DEPLOY_PACKAGE_NAME }} . \
+            -x "*.git*" \
+            -x "node_modules/*" \
+            -x "*.env.local" \
+            -x "*.env.prod" \
+            -x "tests/*" \
+            -x "*.md" \
+            -x ".vscode/*" \
+            -x ".github/*"
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ env.EB_APPLICATION_NAME }}
+          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
+          version_label: ${{ github.sha }}
+          region: ${{ env.AWS_REGION }}
+          deployment_package: ${{ env.DEPLOY_PACKAGE_NAME }}
+          existing_bucket_name: ${{ env.S3_BUCKET_NAME }}
+          use_existing_version_if_available: true
+
+      - name: Deployment finished
+        run: |
+          echo " Deployment successful!"
+          echo " Application URL: https://${{ env.EB_ENVIRONMENT_NAME }}.us-east-1.elasticbeanstalk.com"

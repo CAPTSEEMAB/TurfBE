@@ -1,0 +1,8 @@
+node_modules
+.env
+,env.local
+.env.prod
+
+# Generated analysis/report files
+eslint-backend.txt
+pylint-report.txt
