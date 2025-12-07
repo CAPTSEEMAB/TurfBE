@@ -20,6 +20,7 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ANON_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE) {
+  // eslint-disable-next-line no-console
   console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
@@ -73,18 +74,18 @@ app.get('/health', (req, res) => {
 
 // Ensures API base path starts with / and has no trailing slashes
 function normalizeBase(s) {
-  if (!s.startsWith('/')) s = '/' + s;
+  if (!s.startsWith('/')) s = `/${s}`;
   if (s.length > 1) s = s.replace(/\/+$/,'');
   return s;
 }
 // Sends successful JSON response with status 200 or custom code
-const ok  = (res, data = null, message = 'OK', status = 200) =>
+const ok = (res, data = null, message = 'OK', status = 200) =>
   res.status(status).json({ success: true, message, data });
 // Sends error JSON response with HTTP status and error code
 const bad = (res, status, code, message, details) =>
   res.status(status).json({ success: false, error: { code, message, details } });
 // Async handler wrapper that catches promise rejections and passes to error handler
-const ah  = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+const ah = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 // Middleware that verifies JWT token from Authorization header and attaches user to request
 function auth(req, res, next) {
@@ -378,14 +379,19 @@ app.use(API, r);
 app.use((req, res) => bad(res, 404, 'NOT_FOUND', `Route ${req.method} ${req.originalUrl} not found`));
 // Global error handler that catches unhandled exceptions and returns 500 error
 app.use((err, _req, res, _next) => {
+  // eslint-disable-next-line no-console
   console.error('Unhandled error:', err);
   return bad(res, 500, 'SERVER_ERROR', 'Something went wrong',
     NODE_ENV === 'development' ? err.stack : undefined);
 });
 
 const displayBase = SERVER_PUBLIC_URL ? `${SERVER_PUBLIC_URL}${API}` : `http://localhost:${PORT}${API}`;
+// eslint-disable-next-line no-console
 app.listen(PORT, () => {
+  // eslint-disable-next-line no-console
   console.log(`Environment: ${NODE_ENV}`);
+  // eslint-disable-next-line no-console
   console.log(`API base: ${displayBase}`);
+  // eslint-disable-next-line no-console
   console.log(`Swagger: ${(SERVER_PUBLIC_URL || `http://localhost:${PORT}`)}${API}/docs`);
 });
