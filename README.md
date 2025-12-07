@@ -40,7 +40,13 @@ Server runs on `http://localhost:3000`
 ```bash
 npm start
 ```
+### static analysis Testing
 
+```bash
+npm run lint:score   # Generate Pylint-style code quality report
+npm run lint         # Run ESLint analysis
+npm run lint --fix   # Auto-fix issues
+```
 ## API Documentation
 
 Swagger UI available at `/api/docs`
@@ -66,3 +72,6 @@ Deployed on AWS Elastic Beanstalk (us-east-1)
 - **Auth**: JWT
 - **Validation**: Joi
 - **Documentation**: Swagger UI
+
+
+
