@@ -386,7 +386,5 @@ app.use((err, _req, res, _next) => {
 
 const displayBase = SERVER_PUBLIC_URL ? `${SERVER_PUBLIC_URL}${API}` : `http://localhost:${PORT}${API}`;
 app.listen(PORT, () => {
-  console.log(`Environment: ${NODE_ENV}`);
-  console.log(`API base: ${displayBase}`);
-  console.log(`Swagger: ${(SERVER_PUBLIC_URL || `http://localhost:${PORT}`)}${API}/docs`);
+  console.log(`Server running on ${displayBase}`);
 });
